@@ -1,12 +1,20 @@
 #pragma once
-
+#include <iostream>
 #include "byte_stream.hh"
+#include <queue>
+#include <map>
+using namespace std;
 
 class Reassembler
 {
 public:
   // Construct Reassembler to write into given ByteStream.
-  explicit Reassembler( ByteStream&& output ) : output_( std::move( output ) ) {}
+  explicit Reassembler(ByteStream&& output)
+      : output_(std::move(output)),
+        index(priority_queue<uint64_t, std::vector<uint64_t>, std::greater<uint64_t>>{}),
+        myMap(std::map<uint64_t, std::string>{}) {
+          cout << "ini" << endl;
+        }
 
   /*
    * Insert a new substring to be reassembled into a ByteStream.
@@ -42,4 +50,10 @@ public:
 
 private:
   ByteStream output_; // the Reassembler writes to this ByteStream
+  uint64_t bytes_pending_ {0};
+  uint64_t first_unassembled_index_ {0};
+  priority_queue<uint64_t, vector<uint64_t>, greater<uint64_t>> index;
+  map<uint64_t, string> myMap;
+  bool has_end{false};
+  uint64_t end{0};
 };
