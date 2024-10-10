@@ -1,50 +1,37 @@
 #include "reassembler.hh"
-#include <map>
-using namespace std;
 
 void Reassembler::insert( uint64_t first_index, string data, bool is_last_substring )
 {
-  cout << first_index << " " << first_unassembled_index_ << endl;
   // Your code here.
-  if (first_index > first_unassembled_index_ && first_index < first_unassembled_index_ + output_.writer().available_capacity()) {
-    if (is_last_substring) {
-      has_end = true;
-      end = first_index;
-    }
-    index.push(first_index);
-    if (first_index + data.length() > first_unassembled_index_ + output_.writer().available_capacity()) {
-      data = data.substr(0, first_unassembled_index_ + output_.writer().available_capacity() - first_index);
-      has_end = false;
-    }
-    myMap[first_index] = data;
-    bytes_pending_ += data.length();
+  uint64_t last_index = first_index + data.length() - 1;
+  if (data.empty() || last_index < begin_i_() || first_index > end_i_()) {
+    if (is_last_substring) 
+      output_.writer().close();
     return;
   }
-  if (first_index == first_unassembled_index_) {
-    cout << data << endl;
-    cout << output_.writer().available_capacity() << endl;
-    first_unassembled_index_ += min(output_.writer().available_capacity(), data.length());
+  if (is_last_substring && last_index <= end_i_())
+    has_end = true;
+  if (first_index <= begin_i_()) {
+    data = data.substr(begin_i_() - first_index);
     output_.writer().push(data);
-    cout << "f " << first_unassembled_index_ << endl;
   }
-  else if (first_index < first_unassembled_index_) {
-    if (first_index + data.length() <= first_unassembled_index_)
-      return;
-    data = data.substr(first_unassembled_index_ - first_index);
-    first_unassembled_index_ += min(output_.writer().available_capacity(), data.length());
-    output_.writer().push(data);
+  else if (first_index > begin_i_()) {
+    if (last_index > end_i_()) {
+      data = data.substr(0, end_i_() - first_index + 1);
+    }
+    mergeString(first_index, data);
+    return;
   }
   if (is_last_substring) {
     output_.writer().close();
   }
-  while (!index.empty() && index.top() <= first_unassembled_index_) {
-    uint64_t i = index.top();
-    index.pop();
-    string d = myMap[i];
-    myMap.erase(i);
-    bytes_pending_ -= d.length();
+  auto x = myMap.begin();
+  while (x != myMap.end() && x->first <= begin_i_()) {
+    uint64_t i = x->first;
+    string d = x->second;
+    x = myMap.erase(x);
     bool flag = false;
-    if (has_end && end == i) flag = true;
+    if (has_end && myMap.empty()) flag = true;
     insert(i, d, flag);
   }
 }
@@ -52,5 +39,38 @@ void Reassembler::insert( uint64_t first_index, string data, bool is_last_substr
 uint64_t Reassembler::bytes_pending() const
 {
   // Your code here.
-  return bytes_pending_;
+  uint64_t bp = 0;
+  for (const auto& pair : myMap) {
+      bp += pair.second.length();
+  }
+  return bp;
+}
+
+void Reassembler::mergeString(uint64_t first_index, string data) {
+    auto it = myMap.lower_bound(first_index);
+    auto next = it;
+    if (it != myMap.begin() && (it == myMap.end() || it->first > first_index)) {
+        it--;
+        next = std::next(it);
+    }
+    int newStart = first_index;
+    string newStr = data;
+
+    if (it != myMap.end() && it->first <= first_index && it->first + it->second.size() - 1 >= first_index - 1) {
+        newStart = it->first;
+        string existingStr = it->second;
+        if (it->first + it->second.size() < first_index + data.length())
+            newStr = existingStr.substr(0, first_index - newStart) + data;
+        else
+            newStr = existingStr;
+    }
+    myMap[newStart] = newStr;
+    
+    while (next != myMap.end() && newStart + newStr.size() >= next->first) {
+        if (newStart + newStr.size() < next->first + next->second.size()) {
+            newStr += next->second.substr(newStart + newStr.size() - next->first);
+        }
+        next = myMap.erase(next);
+    }
+    myMap[newStart] = newStr;
 }
