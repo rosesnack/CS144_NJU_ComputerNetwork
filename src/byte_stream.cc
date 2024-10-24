@@ -13,10 +13,7 @@ bool Writer::is_closed() const
 
 void Writer::push( string data )
 {
-  // Your code here.
-  if (error_ || is_closed()) {
-    return ;
-  }
+  // if (error_ || is_closed()) return ;
   uint64_t ac = available_capacity();
   if (data.length() <= ac) {
     queue_ += data;

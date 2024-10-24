@@ -2,13 +2,11 @@
 
 void Reassembler::insert( uint64_t first_index, string data, bool is_last_substring )
 {
-  // Your code here.
   uint64_t last_index = first_index + data.length() - 1;
   if (data.empty() || last_index < begin_i_() || first_index > end_i_()) {
-    if (is_last_substring) output_.writer().close();
+    if (is_last_substring && bytes_pending() == 0) output_.writer().close();
     return;
   }
-
   if (is_last_substring && last_index <= end_i_())
     has_end = true;
 
