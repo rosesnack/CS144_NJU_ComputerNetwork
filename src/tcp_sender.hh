@@ -61,7 +61,7 @@ private:
     }
   };
   priority_queue<TCPSenderMessage, vector<TCPSenderMessage>, CompareSeqno> pq;
-  bool timer_ = false;
+  bool timer_ = false; //是否启动计时器
   uint64_t time_passed_ = 0;
   uint64_t sequence_numbers_in_flight_ = 0;
 };

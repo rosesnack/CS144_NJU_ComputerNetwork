@@ -16,16 +16,17 @@ uint64_t TCPSender::consecutive_retransmissions() const
 void TCPSender::push( const TransmitFunction& transmit )
 {
   TCPSenderMessage mss;
-  uint64_t avail_window_size = 1, len;
+  uint64_t avail_window_size, len;
   string str;
   if (window_size_ == 0) {
-    len = 1;
-    if (sequence_numbers_in_flight_ > 0)
-      return;
+    avail_window_size = len = 1;
+    if (sequence_numbers_in_flight_ > 0) return;
   }
   else {
-    avail_window_size = window_size_ - sequence_numbers_in_flight_;
-    if (window_size_ < sequence_numbers_in_flight_) avail_window_size = 0;
+    if (window_size_ < sequence_numbers_in_flight_) 
+      avail_window_size = 0;
+    else 
+      avail_window_size = window_size_ - sequence_numbers_in_flight_;
     len = min(avail_window_size, TCPConfig::MAX_PAYLOAD_SIZE);
     if (len == 0) return; //window is full
   }
