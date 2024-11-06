@@ -47,6 +47,8 @@ public:
 private:
   // Variables initialized in constructor
   ByteStream input_;
+  bool SYN_ = false;
+  bool FIN_ = false;
   Wrap32 isn_;
   Wrap32 sn_;
   uint64_t initial_RTO_ms_;
@@ -61,4 +63,5 @@ private:
   priority_queue<TCPSenderMessage, vector<TCPSenderMessage>, CompareSeqno> pq;
   bool timer_ = false;
   uint64_t time_passed_ = 0;
+  uint64_t sequence_numbers_in_flight_ = 0;
 };
