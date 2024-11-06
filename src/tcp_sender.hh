@@ -10,13 +10,14 @@
 #include <memory>
 #include <optional>
 #include <queue>
+using namespace std;
 
 class TCPSender
 {
 public:
   /* Construct TCP sender with given default Retransmission Timeout and possible ISN */
   TCPSender( ByteStream&& input, Wrap32 isn, uint64_t initial_RTO_ms )
-    : input_( std::move( input ) ), isn_( isn ), initial_RTO_ms_( initial_RTO_ms )
+    : input_( std::move( input ) ), isn_( isn ), sn_( isn ), initial_RTO_ms_( initial_RTO_ms ), RTO_(initial_RTO_ms), pq(priority_queue<TCPSenderMessage, vector<TCPSenderMessage>, CompareSeqno>{})
   {}
 
   /* Generate an empty TCPSenderMessage */
@@ -47,5 +48,17 @@ private:
   // Variables initialized in constructor
   ByteStream input_;
   Wrap32 isn_;
+  Wrap32 sn_;
   uint64_t initial_RTO_ms_;
+  uint64_t RTO_;
+  uint64_t consecutive_retransmissions_ = 0;
+  uint16_t window_size_ = 1;
+  struct CompareSeqno {
+    bool operator()(const TCPSenderMessage& lhs, const TCPSenderMessage& rhs) const {
+        return rhs.seqno < lhs.seqno;
+    }
+  };
+  priority_queue<TCPSenderMessage, vector<TCPSenderMessage>, CompareSeqno> pq;
+  bool timer_ = false;
+  uint64_t time_passed_ = 0;
 };
