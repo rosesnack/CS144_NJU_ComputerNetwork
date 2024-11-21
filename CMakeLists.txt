@@ -23,4 +23,11 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/src")
 add_subdirectory("${PROJECT_SOURCE_DIR}/tests")
 add_subdirectory("${PROJECT_SOURCE_DIR}/apps")
 
+# 确保线程库被正确链接
+find_package(Threads REQUIRED)
+
+# 链接线程库到特定目标
+target_link_libraries(tcp_ipv4 Threads::Threads)
+target_link_libraries(webget Threads::Threads)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
