@@ -1,10 +1,11 @@
 #pragma once
 
 #include <queue>
-
+#include <unordered_map>
 #include "address.hh"
 #include "ethernet_frame.hh"
 #include "ipv4_datagram.hh"
+using namespace std;
 
 // A "network interface" that connects IP (the internet layer, or network layer)
 // with Ethernet (the network access layer, or link layer).
@@ -81,4 +82,13 @@ private:
 
   // Datagrams that have been received
   std::queue<InternetDatagram> datagrams_received_ {};
+
+  // ARP缓存：存储IP到(MAC, 已存在时间）的映射
+  unordered_map<uint32_t, pair<EthernetAddress, size_t>> arp_cache_;
+
+  // 待发送的数据报队列：目标IP地址到等待ARP解析的InternetDatagram的映射
+  unordered_map<uint32_t, vector<InternetDatagram>> queued_datagrams_;
+
+  // 已发出的ARP请求：目标IP地址到发出时间的映射
+  unordered_map<uint32_t, size_t> pending_arp_requests_;
 };
