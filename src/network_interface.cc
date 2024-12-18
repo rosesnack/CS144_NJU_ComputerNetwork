@@ -30,9 +30,8 @@ NetworkInterface::NetworkInterface( string_view name,
 //! can be converted to a uint32_t (raw 32-bit IP address) by using the Address::ipv4_numeric() method.
 void NetworkInterface::send_datagram( const InternetDatagram& dgram, const Address& next_hop )
 {
-  // 如果已经缓存了目标IP的以太网地址，直接发送
   auto it = arp_cache_.find(next_hop.ipv4_numeric());
-  if (it != arp_cache_.end()) {
+  if (it != arp_cache_.end()) {  // 如果已经缓存了目标IP的以太网地址，直接发送
     EthernetFrame frame;
     frame.header.type = EthernetHeader::TYPE_IPv4;
     frame.header.src = ethernet_address_;
@@ -40,6 +39,8 @@ void NetworkInterface::send_datagram( const InternetDatagram& dgram, const Addre
     frame.payload = serialize(dgram);
     transmit(frame);  
   } else {
+    // 将数据报缓存，等待ARP响应
+    queued_datagrams_[next_hop.ipv4_numeric()].push_back(dgram);
     // 如果没有缓存目标地址，广播ARP请求
     if (pending_arp_requests_.find(next_hop.ipv4_numeric()) == pending_arp_requests_.end()) {
       pending_arp_requests_.insert({next_hop.ipv4_numeric(), 0});
@@ -53,8 +54,6 @@ void NetworkInterface::send_datagram( const InternetDatagram& dgram, const Addre
                              serialize(arpmsg)};
       transmit(frame);
     }
-    // 将数据报缓存，等待ARP响应
-    queued_datagrams_[next_hop.ipv4_numeric()].push_back(dgram);
   }
 }
 
